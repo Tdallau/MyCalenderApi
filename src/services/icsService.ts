@@ -48,15 +48,15 @@ const icsService: IIcsService = {
   },
   getDate: (dateString: string): ics.DateArray => {
     const covert = moment.tz(dateString, "Europe/Paris");
-    const date = new Date(covert.toString());
+    // console.log(covert.utcOffset())
 
 
     const dateArray: ics.DateArray = [
-      date.getFullYear(),
-      date.getMonth() + 1,
-      date.getDate(),
-      date.getHours() + date.getTimezoneOffset() / 60,
-      date.getMinutes(),
+      covert.hour(),
+      covert.month() + 1,
+      covert.date(),
+      covert.hour(),
+      covert.minute(),
     ];
     return dateArray;
   }

@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import * as ics from 'ics';
 import icsService from './icsService';
+import moment from 'moment-timezone';
 
 const mainService: IMainService = {
   sleep: (ms: number) => new Promise((res) => setTimeout(res, ms)),
@@ -30,8 +31,8 @@ const mainService: IMainService = {
   },
   createEvent: async (
     events: string[]
-  ): Promise<{ [field: string]: string }> => {
-    const dict: { [field: string]: string } = {};
+  ): Promise<{ [field: string]: any }> => {
+    const dict: { [field: string]: any } = {};
     for (const event of events) {
       const split = event.split(':');
       const key = split[0];
@@ -46,13 +47,20 @@ const mainService: IMainService = {
         key === 'DTEND' ||
         key === 'CATEGORIES'
       ) {
-        dict[key] = value.replace('\r', '');
+        //moment.tz(dateString, "Europe/Paris")
+        if(key === 'DTSTAMP' ||
+        key === 'DTSTART') {
+          dict[key] = moment.tz(value.replace('\r', ''), "Europe/Paris");
+        } else {
+          dict[key] = value.replace('\r', '');
+        }
+        
       }
     }
 
     return dict;
   },
-  createIcsEvent: (event: {[field: string]: string}): ics.EventAttributes => {
+  createIcsEvent: (event: {[field: string]: string}, name: string): ics.EventAttributes => {
 
     const obj: ics.EventAttributes = {
       duration: icsService.getDuration(event['DURATION']),
@@ -61,7 +69,8 @@ const mainService: IMainService = {
       categories: event['CATEGORIES'] ? event['CATEGORIES'].split(',') : undefined,
       location: event['LOCATION'],
       description: event['DESCRIPTION'],
-      title: event['SUMMARY']
+      title: event['SUMMARY'],
+      calName: name
     }
     const ics: {[key: string]: any} = {};
     for (const key of Object.keys(obj)) {

@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import { writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import * as ics from 'ics';
+import moment from 'moment-timezone';
 
 const parse = async (url: string): Promise<Match[]> => {
   const browser = await puppeteer.launch({
@@ -89,13 +90,7 @@ const parse = async (url: string): Promise<Match[]> => {
       const filtertMatchdata = matchData.filter((x) => x.trim() !== '');
 
       const matchObj: Match = {
-        date: new Date(
-          +`20${+d[2]}`,
-          +d[1] - 1,
-          +d[0],
-          +timeSplit[0] + 2,
-          +timeSplit[1]
-        ),
+        date: moment.tz(`20${+d[2]}-${+d[1] < 10 ? `0${+d[1]}` : +d[1] }-${+d[0] < 10 ? `0${+d[0]}` : +d[0]} ${time.trim()}`, 'Europe/Amsterdam'),
         home: `${await teama?.jsonValue()}`.trim(),
         away: `${await teamb?.jsonValue()}`.trim(),
         status: score,
@@ -107,6 +102,7 @@ const parse = async (url: string): Promise<Match[]> => {
 
       rtrMatch.push(matchObj);
       console.log(`parsed match ${matchObj.home} - ${matchObj.away}`);
+      // console.log(date);
     } else {
       console.log(
         `${await teama?.jsonValue()}`.trim() +
@@ -131,12 +127,13 @@ export const generateIcs = async () => {
 
   matches.forEach((match) => {
     const dateArray: ics.DateArray = [
-      match.date.getFullYear(),
-      match.date.getMonth() + 1,
-      match.date.getDate(),
-      match.date.getHours() + match.date.getTimezoneOffset() / 60,
-      match.date.getMinutes(),
+      match.date.year(),
+      match.date.month() + 1,
+      match.date.date(),
+      match.date.hour(),
+      match.date.minute(),
     ];
+    console.log(dateArray)
 
     const alarms: ics.Alarm[] = [];
 
@@ -152,6 +149,7 @@ export const generateIcs = async () => {
       location: match.stadium,
       description: `Dit is een ${match.compFullname} wedstrijd`,
       alarms: alarms,
+      calName: 'Feyenoord'
     });
   });
 
@@ -172,20 +170,20 @@ function createIcs(activitys: ics.EventAttributes[]) {
     if (error) {
       console.log(error);
     }
-    if (existsSync(`${__dirname}/public/feyenoord.ics`)) {
-      unlinkSync(`${__dirname}/public/feyenoord.ics`);
+    if (existsSync(`${__dirname}/files/feyenoord.ics`)) {
+      unlinkSync(`${__dirname}/files/feyenoord.ics`);
     }
-    if (!existsSync(`${__dirname}/public`)) {
-      mkdirSync(`${__dirname}/public`);
+    if (!existsSync(`${__dirname}/files`)) {
+      mkdirSync(`${__dirname}/files`);
     }
 
-    writeFileSync(`${__dirname}/public/feyenoord.ics`, value);
+    writeFileSync(`${__dirname}/files/feyenoord.ics`, value);
     console.log('done');
   });
 }
 
 interface Match {
-  date: Date;
+  date: moment.Moment;
   home: string;
   away: string;
   status: string;
