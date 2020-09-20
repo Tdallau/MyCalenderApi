@@ -1,7 +1,7 @@
 import * as ics from 'ics';
 
 interface IIcsService {
-  getDuration: (dur: string) => ics.DurationObject;
+  getDuration: (dur: string) => ics.DurationObject | null;
   getDate: (dateString: string) => ics.DateArray;
 }
 

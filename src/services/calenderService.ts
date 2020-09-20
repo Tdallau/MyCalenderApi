@@ -5,11 +5,30 @@ import Axios from "axios";
 import { existsSync, unlinkSync, mkdirSync, writeFileSync } from "fs";
 
 const calenderService: iCalenderService = {
-  getAllCalenders: async (): Promise<Calender[]> => {
-    const response = await Axios.get<any>('https://home.dallau.com/mycalender/calender')
+  getAllCalenders: async (auth: string | undefined = undefined): Promise<Calender[]> => {
+    let headers = {};
+    if(auth !== undefined) {
+      headers = {
+        Authorization: auth
+      }
+    }
+    const response = await Axios.get<any>('https://home.dallau.com/mycalender/calender', {
+      headers
+    })
     return response.data.data.list;
   },
   addCalenderToDB: async (cal, auth): Promise<Calender> => {
+    const calenders = await calenderService.getAllCalenders()
+    if(calenders.find(x => x.fileName === cal.fileName) !== undefined) {
+      console.log('already added to db');
+      return new Promise((res) => {
+        return res({
+          id: -1,
+          fileName: cal.fileName,
+          name: cal.name
+        })
+      })
+    }
     return await Axios.post('https://home.dallau.com/mycalender/calender', cal, {
       headers: {
         Authorization: auth

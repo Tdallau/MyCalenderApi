@@ -15,7 +15,22 @@ export const getAllCalenders = async (
   res: Response
 ): Promise<void> => {
   const calenders = await calenderService.getAllCalenders();
-  res.status(200).json(calenders);
+  res.status(200).json({
+    success: true,
+    data: calenders
+  });
+};
+
+export const getMyCalenders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const auth = req.header('Authorization');
+  const calenders = await calenderService.getAllCalenders(auth);
+  res.status(200).json({
+    success: true,
+    data: calenders
+  });
 };
 
 export const getCalender = async (
@@ -48,6 +63,7 @@ export const getCalenderData = async (req: Request, res: Response) => {
   const calenders = await calenderService.getAllCalenders();
   const calender = calenders.find((x) => x.id === +req.params.id);
   if (calender === undefined || calender === null) {
+    console.log('hallo')
     res.status(404).send('calender niet gevonden');
     return;
   }
@@ -114,8 +130,11 @@ export const createCalenderJson = async (
     for (const event of data.events) {
       list.push(mainService.createIcsEvent(event, data.name));
     }
+    // console.log(list)
+    // res.json({ success: true, data: 'Calender is aangemaakt' });
+    // return;
     // create ics file
-    calenderService.createCalender(list, data.name, async (err) => {
+    calenderService.createCalender(list, data.fileName, async (err) => {
       if (err) {
         res.status(400).send(err);
         return;

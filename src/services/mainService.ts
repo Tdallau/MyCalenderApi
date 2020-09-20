@@ -23,18 +23,16 @@ const mainService: IMainService = {
       }
       next();
     } else {
-      return res.status(403).send({
+      return res.status(200).send({
         success: false,
         error: 'Er is geen token gevonden',
       });
     }
   },
-  createEvent: async (
-    events: string[]
-  ): Promise<{ [field: string]: any }> => {
+  createEvent: async (events: string[]): Promise<{ [field: string]: any }> => {
     const dict: { [field: string]: any } = {};
     for (const event of events) {
-      const split = event.split(':');
+      const split = event.split(/:(.+)/);
       const key = split[0];
       const value = split[1];
       if (
@@ -45,41 +43,51 @@ const mainService: IMainService = {
         key === 'LOCATION' ||
         key === 'DURATION' ||
         key === 'DTEND' ||
-        key === 'CATEGORIES'
+        key === 'CATEGORIES' ||
+        key === 'UID'
       ) {
         //moment.tz(dateString, "Europe/Paris")
-        if(key === 'DTSTAMP' ||
-        key === 'DTSTART') {
-          dict[key] = moment.tz(value.replace('\r', ''), "Europe/Paris");
+        if (key === 'DTSTAMP' || key === 'DTSTART' || key === 'DTEND') {
+          dict[key] = moment.tz(value, 'Europe/Paris');
         } else {
-          dict[key] = value.replace('\r', '');
+          dict[key] = value;
         }
-        
       }
     }
 
     return dict;
   },
-  createIcsEvent: (event: {[field: string]: string}, name: string): ics.EventAttributes => {
-
-    const obj: ics.EventAttributes = {
-      duration: icsService.getDuration(event['DURATION']),
+  createIcsEvent: (
+    event: { [field: string]: string },
+    name: string
+  ): ics.EventAttributes => {
+    const obj: ics.EventAttributes | {[key: string] : any} = {
       start: icsService.getDate(event['DTSTART']),
-      end: event['DTEND'] ? icsService.getDate(event['DTEND']) : undefined,
-      categories: event['CATEGORIES'] ? event['CATEGORIES'].split(',') : undefined,
+      // end: event['DTEND'] ? icsService.getDate(event['DTEND']) : undefined,
+      categories: event['CATEGORIES']
+        ? event['CATEGORIES'].split(',')
+        : undefined,
       location: event['LOCATION'],
       description: event['DESCRIPTION'],
       title: event['SUMMARY'],
-      calName: name
+      calName: name,
+    };
+    const dur = icsService.getDuration(event['DURATION'])
+    if(dur !== null) {
+      obj['duration'] = dur;
     }
-    const ics: {[key: string]: any} = {};
+    if(event['DTEND']) {
+      obj['end'] = icsService.getDate(event['DTEND'])
+    }
+    
+    const ics: { [key: string]: any } = {};
     for (const key of Object.keys(obj)) {
       const field = key as keyof ics.EventAttributes;
-      if(obj[field] !== undefined) {
+      if (obj[field] !== undefined) {
         ics[field] = obj[field];
       }
     }
-    return ics as ics.EventAttributes
+    return ics as ics.EventAttributes;
   },
 };
 

@@ -9,22 +9,25 @@ import fileUpload from 'express-fileupload';
 const app = express();
 const PORT = 8000;
 
-app.use(function (_req, res, next) {
-
+app.use(function (req, res, next) {
+  const allowedOrigins = ['http://localhost:4200', 'https://calenders.dallau.com', 'https://kalenders.dallau.com'];
   // Website you wish to allow to connect
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
-  res.setHeader('Access-Control-Allow-Origin', 'https://calenders.dallau.com');
+  const origin = req.headers.origin as string;
+  if(allowedOrigins.indexOf(origin) > -1){
+       res.setHeader('Access-Control-Allow-Origin', origin);
+  }
 
   // Request methods you wish to allow
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
 
   // Request headers you wish to allow
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, authorization');
 
   // Set to true if you need the website to include cookies in the requests sent
   // to the API (e.g. in case you use sessions)
   // @ts-ignore
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // res.setHeader('Access-Control-Allow-Credentials', true);
+  // console.log(res.getHeaders())
 
   // Pass to next layer of middleware
   next();
@@ -42,5 +45,5 @@ app.use('/authorization', authRouter);
 
 
 app.listen(PORT, () => {
-  console.log(`⚡️[server]: Server is running at https://localhost:${PORT}`);
+  console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
 });

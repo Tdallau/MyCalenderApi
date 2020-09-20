@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getCalender, createCalenderIcs, getCalenderData, createCalenderJson, getAllCalenders } from "../controllers/calenderController";
+import { getCalender, createCalenderIcs, getCalenderData, createCalenderJson, getAllCalenders, getMyCalenders } from "../controllers/calenderController";
 import mainService from "../services/mainService";
 // import mainService from "../services/mainService";
 
@@ -8,6 +8,7 @@ calenderRouter.get('/subscribe/:id', getCalender);
 calenderRouter.get('/', getAllCalenders);
 
 calenderRouter.use(mainService.checkToken);
+calenderRouter.get('/my', getMyCalenders);
 
 calenderRouter.get('/data/:id', getCalenderData);
 calenderRouter.post('/', createCalenderIcs);
